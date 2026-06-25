@@ -1,5 +1,6 @@
 package com.examportal.dto.request;
 
+import com.examportal.validator.ValidTimeRange;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -10,8 +11,8 @@ import java.time.LocalDateTime;
 
 /**
  * Request DTO for creating a new exam.
- * Requirements: 4.1–4.5, 17.4–17.7
  */
+@ValidTimeRange
 public record CreateExamRequest(
 
         @NotBlank(message = "Title must not be blank")
