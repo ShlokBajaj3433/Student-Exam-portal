@@ -17,7 +17,6 @@ import java.util.List;
 /**
  * Global exception handler for all REST endpoints.
  * Centralizes error response formatting and HTTP status code mapping.
- * Requirements: 16.1–16.7
  */
 @RestControllerAdvice
 @Slf4j
@@ -25,7 +24,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle ResourceNotFoundException → 404 Not Found
-     * Requirements: 16.1
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
@@ -41,7 +39,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle ExamNotAvailableException → 409 Conflict
-     * Requirements: 16.2
      */
     @ExceptionHandler(ExamNotAvailableException.class)
     public ResponseEntity<ErrorResponse> handleExamNotAvailable(ExamNotAvailableException ex) {
@@ -57,7 +54,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle DuplicateAttemptException → 409 Conflict
-     * Requirements: 16.2
      */
     @ExceptionHandler(DuplicateAttemptException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateAttempt(DuplicateAttemptException ex) {
@@ -73,7 +69,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle DuplicateEmailException → 409 Conflict
-     * Requirements: 16.2
      */
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException ex) {
@@ -89,7 +84,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle ReportNotReadyException → 409 Conflict
-     * Requirements: 16.2
      */
     @ExceptionHandler(ReportNotReadyException.class)
     public ResponseEntity<ErrorResponse> handleReportNotReady(ReportNotReadyException ex) {
@@ -105,7 +99,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle AccessDeniedException (Spring Security) → 403 Forbidden
-     * Requirements: 16.5
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
@@ -122,7 +115,6 @@ public class GlobalExceptionHandler {
     /**
      * Handle UnauthorizedAccessException → 403 Forbidden
      * Custom exception for resource ownership violations.
-     * Requirements: 16.5
      */
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
@@ -139,7 +131,6 @@ public class GlobalExceptionHandler {
     /**
      * Handle MethodArgumentNotValidException → 400 Bad Request
      * Extracts field-level validation error messages.
-     * Requirements: 16.3
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValid(
@@ -164,7 +155,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle JwtException and MalformedJwtException → 401 Unauthorized
-     * Requirements: 16.4
      */
     @ExceptionHandler({JwtException.class, MalformedJwtException.class})
     public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex) {
@@ -181,7 +171,6 @@ public class GlobalExceptionHandler {
     /**
      * Catch-all exception handler → 500 Internal Server Error
      * Logs full stack trace server-side without exposing implementation details.
-     * Requirements: 16.6
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {

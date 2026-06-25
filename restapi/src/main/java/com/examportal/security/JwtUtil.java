@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,19 +22,10 @@ import java.util.function.Function;
  *   Token generation with claims (subject, roles, issuedAt, expiration)
  *   Token validation (signature, expiry, subject matching)
  *   Claim extraction (username, roles, expiry, etc.)
-
-Configuration properties:
- *
+ * 
+ * Configuration properties:
  *   {@code app.jwt.secret}: Base64-encoded HS256 secret key (minimum 256-bit/32-byte)
  *   {@code app.jwt.expiration-ms}: Token expiration in milliseconds (default: 86400000 = 24 hours)
- * 
- *
-Requirements addressed:
- *
- *   Requirement 2.4: JWT tokens signed with HS256 using minimum 256-bit secret key
- *   Requirement 2.5: JWT token expiration set to 24 hours by default
- *   Requirement 18.4: JWT validation (signature and expiry) on protected endpoints
- * 
  */
 @Component
 public class JwtUtil {
@@ -74,15 +64,12 @@ public class JwtUtil {
 
     /**
      * Generates a signed JWT token for the given user details.
-    
      * The token includes:
-     *
      *   Subject (sub): Username (email)
      *   Issued At (iat): Current timestamp
      *   Expiration (exp): Current timestamp + expirationMs
      *   Custom claim "roles": List of user roles
      * 
-     *
      * @param userDetails the user details to encode in the token
      * @return a compact JWT string
      */
@@ -91,9 +78,9 @@ public class JwtUtil {
             throw new IllegalArgumentException("User details and username must not be null");
         }
 
-        Map<String, Object claims = new HashMap<();
+        Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities()
-            .stream().map(grantedAuthority - grantedAuthority.getAuthority()).toList());
+            .stream().map(grantedAuthority -> grantedAuthority.getAuthority()).toList());
 
         return Jwts.builder()
             .claims(claims)
@@ -144,7 +131,7 @@ public class JwtUtil {
      * @param token the JWT token
      * @return list of role strings from the token
      */
-    public List<String extractRoles(String token) {
+    public List<String> extractRoles(String token) {
         Claims claims = extractAllClaims(token);
         return claims.get("roles", List.class);
     }
@@ -153,10 +140,10 @@ public class JwtUtil {
      * Extracts a specific claim from the JWT token.
      * @param token           the JWT token
      * @param claimsResolver  function to extract the claim
-     * @param <T             the claim type
+     * @param <T>             the claim type
      * @return the extracted claim value
      */
-    private <T T extractClaim(String token, Function<Claims, T claimsResolver) {
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
