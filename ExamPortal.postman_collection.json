@@ -1,0 +1,526 @@
+{
+  "info": {
+    "name": "Online Examination System",
+    "_postman_id": "exam-portal-collection-v1",
+    "description": "Complete API collection for the Online Examination System.\n\nUsage:\n1. Set the `baseUrl` variable (default: http://localhost:8081).\n2. Run **Register Admin** and **Login Admin** — the token is saved automatically to `adminToken`.\n3. Run **Register Student** and **Login Student** — the token is saved to `studentToken`.\n4. All subsequent requests pick up the correct token from collection variables automatically.\n\nVariables used:\n- `baseUrl`       — base URL of the running API\n- `adminToken`    — JWT for the ADMIN user (auto-set by Login Admin)\n- `studentToken`  — JWT for the STUDENT user (auto-set by Login Student)\n- `examId`        — set manually or via a Create Exam test script\n- `questionId`    — set manually or via a Create Question test script\n- `attemptId`     — set manually or via a Start Exam test script",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:8081", "type": "string" },
+    { "key": "adminToken",   "value": "",                      "type": "string" },
+    { "key": "studentToken", "value": "",                      "type": "string" },
+    { "key": "examId",       "value": "1",                     "type": "string" },
+    { "key": "questionId",   "value": "1",                     "type": "string" },
+    { "key": "attemptId",    "value": "1",                     "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth",
+      "description": "User registration and login. Login requests auto-save tokens to collection variables.",
+      "item": [
+
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"System Admin\",\n  \"email\": \"admin@examportal.com\",\n  \"password\": \"Admin@12345\",\n  \"role\": \"ADMIN\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const token = pm.response.json().token;",
+                  "  pm.collectionVariables.set('adminToken', token);",
+                  "  console.log('adminToken saved:', token.substring(0,30) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "Register Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Student\",\n  \"email\": \"alice@student.com\",\n  \"password\": \"Student@12345\",\n  \"role\": \"STUDENT\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const token = pm.response.json().token;",
+                  "  pm.collectionVariables.set('studentToken', token);",
+                  "  console.log('studentToken saved:', token.substring(0,30) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@examportal.com\",\n  \"password\": \"Admin@12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const token = pm.response.json().token;",
+                  "  pm.collectionVariables.set('adminToken', token);",
+                  "  console.log('adminToken refreshed:', token.substring(0,30) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "Login Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@student.com\",\n  \"password\": \"Student@12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const token = pm.response.json().token;",
+                  "  pm.collectionVariables.set('studentToken', token);",
+                  "  console.log('studentToken refreshed:', token.substring(0,30) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "Register - Duplicate Email (expect 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate\",\n  \"email\": \"admin@examportal.com\",\n  \"password\": \"Admin@12345\",\n  \"role\": \"ADMIN\"\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Login - Wrong Password (expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@examportal.com\",\n  \"password\": \"wrongpassword\"\n}"
+            }
+          },
+          "response": []
+        }
+
+      ]
+    },
+
+    {
+      "name": "Exam Management (Admin)",
+      "description": "CRUD, lifecycle transitions (DRAFT → PUBLISHED → CLOSED), and question assignment. All requests use adminToken.",
+      "item": [
+
+        {
+          "name": "Create Exam",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/exams", "host": ["{{baseUrl}}"], "path": ["api","exams"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"A test covering core Spring Boot concepts.\",\n  \"durationMinutes\": 60,\n  \"totalMarks\": 100,\n  \"startTime\": \"2026-07-01T09:00:00\",\n  \"endTime\": \"2026-07-01T18:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const id = pm.response.json().examId;",
+                  "  pm.collectionVariables.set('examId', id);",
+                  "  console.log('examId saved:', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "List All Exams (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/exams?page=0&size=10&sort=createdAt,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","exams"],
+              "query": [
+                { "key": "page",  "value": "0" },
+                { "key": "size",  "value": "10" },
+                { "key": "sort",  "value": "createdAt,desc" }
+              ]
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Get Exam by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Update Exam",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot Fundamentals (Updated)\",\n  \"durationMinutes\": 90\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Assign Questions to Exam",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}/questions", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}","questions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionIds\": [{{questionId}}]\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Publish Exam",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}/publish", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}","publish"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Close Exam",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}/close", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}","close"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Delete Exam",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Create Exam - Validation Error (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/exams", "host": ["{{baseUrl}}"], "path": ["api","exams"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"durationMinutes\": 0,\n  \"totalMarks\": -1\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Publish Exam - No Questions (expect 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams/{{examId}}/publish", "host": ["{{baseUrl}}"], "path": ["api","exams","{{examId}}","publish"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Student Access Exam Endpoint (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/exams", "host": ["{{baseUrl}}"], "path": ["api","exams"] }
+          },
+          "response": []
+        }
+
+      ]
+    },
+
+    {
+      "name": "Question Bank (Admin)",
+      "description": "CRUD for the question bank. All requests use adminToken.",
+      "item": [
+
+        {
+          "name": "Create Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/questions", "host": ["{{baseUrl}}"], "path": ["api","questions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"What annotation is used to mark a Spring Bean?\",\n  \"optionA\": \"@Component\",\n  \"optionB\": \"@Bean\",\n  \"optionC\": \"@Service\",\n  \"optionD\": \"@Repository\",\n  \"correctAnswer\": \"A\",\n  \"marks\": 10,\n  \"difficulty\": \"EASY\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const id = pm.response.json().questionId;",
+                  "  pm.collectionVariables.set('questionId', id);",
+                  "  console.log('questionId saved:', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "List All Questions (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions?page=0&size=10&sort=questionId,asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","questions"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "questionId,asc" }
+              ]
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Get Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api","questions","{{questionId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api","questions","{{questionId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"What annotation marks a class as a Spring-managed component?\",\n  \"difficulty\": \"MEDIUM\"\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api","questions","{{questionId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Create Question - Invalid correctAnswer (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/questions", "host": ["{{baseUrl}}"], "path": ["api","questions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"Bad question\",\n  \"optionA\": \"A\",\n  \"optionB\": \"B\",\n  \"optionC\": \"C\",\n  \"optionD\": \"D\",\n  \"correctAnswer\": \"E\",\n  \"marks\": 5\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Delete Question in Published Exam (expect 409)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api","questions","{{questionId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Get Question - Not Found (expect 404)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/questions/999999", "host": ["{{baseUrl}}"], "path": ["api","questions","999999"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Student Access Questions (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/questions", "host": ["{{baseUrl}}"], "path": ["api","questions"] }
+          },
+          "response": []
+        }
+
+      ]
+    },
+
+    {
+      "name": "RBAC & Security",
+      "description": "Cross-cutting security checks: unauthenticated access, wrong-role access, invalid tokens.",
+      "item": [
+
+        {
+          "name": "No Token - Protected Endpoint (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/exams", "host": ["{{baseUrl}}"], "path": ["api","exams"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Invalid Token (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer this.is.not.a.valid.token" }],
+            "url": { "raw": "{{baseUrl}}/api/exams", "host": ["{{baseUrl}}"], "path": ["api","exams"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Swagger UI (expect 200, no auth needed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/swagger-ui.html", "host": ["{{baseUrl}}"], "path": ["swagger-ui.html"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "OpenAPI JSON (expect 200, no auth needed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/v3/api-docs", "host": ["{{baseUrl}}"], "path": ["v3","api-docs"] }
+          },
+          "response": []
+        }
+
+      ]
+    }
+
+  ]
+}
