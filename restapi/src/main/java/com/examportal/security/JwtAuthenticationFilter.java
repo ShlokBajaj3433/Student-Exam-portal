@@ -1,7 +1,5 @@
 package com.examportal.security;
 
-import io.jsonwebtoken.Claims;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,7 +7,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -24,23 +21,18 @@ import java.util.List;
  * JWT authentication filter that extracts and validates JWT tokens from requests.
  * Sets the authentication in SecurityContextHolder if the token is valid.
  * <p>
+ * Instantiated as a Spring bean via {@code SecurityConfig.jwtAuthenticationFilter()}.
+ * NOT annotated with @Component to prevent double-registration in the filter chain.
+ * <p>
  * Requirements: 2.6, 2.7
- *
- * @author Kiro
  */
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private JwtUtil jwtUtil;
-    private UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
 
-    @Autowired
-    public void setJwtUtil(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
-    }
-
-    @Autowired
-    public void setUserDetailsService(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 
