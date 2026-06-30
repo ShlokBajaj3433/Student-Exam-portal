@@ -83,4 +83,13 @@ public interface ExamService {
      * @return the updated exam
      */
     ExamResponse assignQuestions(Long examId, List<Long> questionIds);
+
+    /**
+     * Returns a paginated list of currently available PUBLISHED exams
+     * whose active window covers the current instant (student view).
+     *
+     * @param pageable pagination parameters
+     * @return page of published exams within the active window
+     */
+    Page<ExamResponse> getPublishedExams(Pageable pageable);
 }

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,6 +153,19 @@ public class ExamServiceImpl implements ExamService {
     @Transactional(readOnly = true)
     public Page<ExamResponse> getAllExams(Pageable pageable) {
         return examRepository.findAll(pageable).map(ExamResponse::from);
+    }
+
+    /**
+     * Returns a paginated list of currently available PUBLISHED exams
+     * whose active window covers {@link LocalDateTime#now()} (student view).
+     *
+     * Requirements: 7.4, 7.5
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ExamResponse> getPublishedExams(Pageable pageable) {
+        return examRepository.findPublishedWithinWindowPaged(LocalDateTime.now(), pageable)
+                .map(ExamResponse::from);
     }
 
     /**
