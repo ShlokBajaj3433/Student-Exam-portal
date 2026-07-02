@@ -1,0 +1,256 @@
+You are a senior frontend architect and React engineer. Build a complete React frontend for an Online Examination System backed by a Spring Boot REST API.
+
+Goal
+Create a production-ready React application with a modern, polished UI, clear information architecture, role-based navigation, authenticated API integration, and a maintainable folder structure. The UI must support ADMIN and STUDENT roles and map cleanly to the backend endpoints described below.
+
+Implementation flow
+Follow this order when building the frontend:
+1. Set up the project scaffold, routing, styling system, and shared app providers.
+2. Build the API client, auth store, token persistence, and permission helpers.
+3. Implement public authentication pages and route guards.
+4. Build the shared layout, navigation, shell components, and global feedback system.
+5. Implement the admin exam management screens and their CRUD actions.
+6. Implement the admin question bank screens and their CRUD actions.
+7. Implement the student exam browsing, attempt, answer-saving, submission, and result flow.
+8. Add loading, empty, validation, error, and retry states everywhere.
+9. Add responsive behavior, accessibility polish, and final visual refinement.
+10. Add tests for auth, guards, mutations, timers, and role-based navigation.
+
+When a step depends on another step, do not jump ahead. Keep the code production-oriented and complete each phase before starting the next.
+
+Recommended stack
+- React 18+
+- TypeScript
+- Vite
+- React Router
+- TanStack Query for server state
+- Zustand or Context for lightweight auth/session state
+- Axios or fetch wrapper with interceptors
+- React Hook Form + Zod for forms and validation
+- A component library only if it improves quality; otherwise create a custom design system
+- Tailwind CSS or CSS Modules are both acceptable, but the design must feel intentional and not generic
+
+Product requirements
+Build the frontend for these user journeys:
+- Public authentication: register, login
+- Admin exam management: create, update, list, view, publish, close, delete exams
+- Admin question bank management: create, update, list, view, delete questions
+- Student exam flow: view available exams, start an attempt, save answers, submit exams, view results, and inspect attempt history
+- RBAC: show/hide routes and actions based on role
+- Global error handling for 400, 401, 403, 404, 409, and validation errors
+- Loading, empty, and retry states for all data-driven screens
+- Responsive layout for desktop and mobile
+
+Backend API contract to support
+Authentication
+- POST /api/auth/register
+- POST /api/auth/login
+
+Admin exam management
+- GET /api/exams?page=&size=&sort=
+- POST /api/exams
+- GET /api/exams/{id}
+- PUT /api/exams/{id}
+- DELETE /api/exams/{id}
+- POST /api/exams/{id}/publish
+- POST /api/exams/{id}/close
+- POST /api/exams/{id}/questions
+
+Admin question bank
+- GET /api/questions?page=&size=&sort=
+- POST /api/questions
+- GET /api/questions/{id}
+- PUT /api/questions/{id}
+- DELETE /api/questions/{id}
+
+Student flow
+- GET /api/student/exams?page=&size=
+- POST /api/student/startExam?examId=
+- PATCH /api/student/answer?attemptId=
+- POST /api/student/submitExam
+- GET /api/student/result/{attemptId}
+- GET /api/student/attempts
+
+Authentication and authorization rules
+- Store JWT securely in memory or local storage depending on the architecture decision, but implement token refresh and persistence behavior consistently.
+- Attach Authorization: Bearer <token> to protected requests.
+- Redirect unauthenticated users to login.
+- Prevent STUDENT users from accessing ADMIN pages.
+- Prevent ADMIN users from accessing student-only attempt pages unless explicitly needed for support tooling.
+- Build route guards and a reusable permission helper.
+
+Information architecture
+Create the following app sections:
+- Public
+  - Login
+  - Register
+  - Access denied
+- Admin dashboard
+  - Overview
+  - Exam list
+  - Create/edit exam
+  - Exam details
+  - Question bank list
+  - Create/edit question
+  - Question details
+- Student dashboard
+  - Available exams
+  - Active attempt screen
+  - Submit confirmation
+  - Result detail
+  - Attempt history
+- Shared
+  - Profile or account menu if useful
+  - Global notifications/toasts
+  - Not found page
+
+Suggested folder structure
+Use a scalable structure similar to this:
+
+src/
+  app/
+    providers/
+    routes/
+    store/
+    queryClient/
+    layout/
+  assets/
+  components/
+    ui/
+    forms/
+    feedback/
+    navigation/
+    data-display/
+  features/
+    auth/
+      api/
+      components/
+      hooks/
+      pages/
+      types/
+      utils/
+    exams/
+      api/
+      components/
+      pages/
+      hooks/
+      types/
+    questions/
+      api/
+      components/
+      pages/
+      hooks/
+      types/
+    student/
+      api/
+      components/
+      pages/
+      hooks/
+      types/
+  lib/
+    api/
+    auth/
+    constants/
+    formatters/
+    validators/
+    helpers/
+  styles/
+  main.tsx
+  App.tsx
+
+UI/UX direction
+The interface should feel purposeful, modern, and confident.
+- Use a strong visual identity with a clear typography hierarchy
+- Avoid default-looking admin templates
+- Use cards, sidebars, badges, progress indicators, tabs, and table actions thoughtfully
+- Include subtle motion for page transitions and feedback states
+- Make exam-taking screens focused and distraction-free
+- Highlight time, status, and progress prominently during attempts
+- Use color semantics for statuses like DRAFT, PUBLISHED, CLOSED, IN_PROGRESS, SUBMITTED, TIMED_OUT
+- Ensure forms are easy to scan and validate inline
+- Design for accessibility: contrast, keyboard navigation, visible focus states, semantic HTML, and aria labels where needed
+
+Core screens to implement
+Authentication
+- Login form with email/password
+- Register form with name, email, password, and role selector
+- Show backend validation and error messages clearly
+
+Admin exam management
+- Paginated exam list with search/filter/sort if useful
+- Create/edit exam form with title, description, duration, total marks, start time, end time
+- Exam detail page showing metadata, status, question count, and available actions
+- Question assignment UI that allows selecting questions and attaching them to an exam
+- Publish and close action confirmations
+
+Admin question management
+- Paginated question list
+- Create/edit question form with text, options A-D, correct answer, marks, difficulty
+- Question detail page
+- Delete confirmation with conflict messaging if the question is used in a published exam
+
+Student flow
+- Available exams page with eligibility/status information
+- Start exam action that opens an attempt view
+- Attempt view should:
+  - Display exam title, timer, and progress
+  - Show questions one at a time or in a review panel layout
+  - Support saving answers during the attempt
+  - Allow skipped questions
+  - Warn before leaving the page
+- Submission screen with a summary review before final submit
+- Result page showing score, percentage, grade, passed/failed, and evaluation timestamp
+- Attempt history page with previous attempts and statuses
+
+State management rules
+- Use a dedicated auth store for token, role, and current user profile if available
+- Use React Query for server cache, pagination, and mutations
+- Centralize API error parsing so UI messages are consistent
+- Keep forms local and submit through mutation hooks
+- Keep route-level data fetching separate from component presentation where possible
+
+API integration details
+- Create a typed API client with request/response models for every endpoint
+- Normalize page responses consistently
+- Handle 204 responses for delete actions
+- Handle 201 responses for create actions
+- For submit and start exam flows, update the cache and navigate to the correct next screen
+- Preserve exam attempt IDs and question IDs across navigation
+
+Validation and error handling
+- Mirror backend validation in the frontend using form validation
+- Display field-level validation for blank fields, invalid email, password length, invalid correct answer, invalid marks, and invalid time ranges
+- Show toast or alert feedback for success and failure states
+- Map status codes to user-friendly messages:
+  - 400: validation issue
+  - 401: session expired or invalid token
+  - 403: not authorized
+  - 404: resource not found
+  - 409: business rule conflict
+
+Testing expectations
+Include tests for:
+- Auth forms
+- Route guards
+- Key mutations and data loading
+- Timer and answer-saving logic for student attempts
+- Error-state rendering
+- Role-based navigation
+
+Output expectations
+- Generate a complete React project structure with files and folders
+- Include the main application shell, routing, auth layer, API layer, and feature scaffolding
+- Include placeholder pages and reusable components where implementation details are not fully known
+- Write clean, readable, production-oriented code
+- Do not leave the project in a toy/demo state
+- If any backend field or response shape is uncertain, make a reasonable assumption and note it clearly in the code comments or README
+
+Important implementation notes
+- Use the exact backend paths listed above
+- Build around the current Spring Boot exam portal API
+- Keep naming consistent with the domain: exams, questions, attempts, results, auth
+- Ensure the student exam flow works even when the attempt is in progress and the browser refreshes
+- Prefer clarity and maintainability over overly clever abstractions
+- Implement the app in the same order as the Implementation flow above so the foundation is stable before feature pages are added
+
+Now generate the React frontend with this structure and standards.

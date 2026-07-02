@@ -1,11 +1,14 @@
 package com.examportal.controller;
 
 import com.examportal.dto.request.AnswerDto;
+import com.examportal.dto.request.SubmitExamRequest;
 import com.examportal.dto.response.AttemptSummaryResponse;
 import com.examportal.dto.response.ExamAttemptResponse;
 import com.examportal.dto.response.ExamResponse;
+import com.examportal.dto.response.ResultResponse;
 import com.examportal.service.ExamAttemptService;
 import com.examportal.service.ExamService;
+import com.examportal.service.ResultService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,11 +45,14 @@ public class StudentExamController {
 
     private final ExamService examService;
     private final ExamAttemptService examAttemptService;
+    private final ResultService resultService;
 
     public StudentExamController(ExamService examService,
-                                 ExamAttemptService examAttemptService) {
+                                 ExamAttemptService examAttemptService,
+                                 ResultService resultService) {
         this.examService = examService;
         this.examAttemptService = examAttemptService;
+        this.resultService = resultService;
     }
 
     // ─── Exam browsing ────────────────────────────────────────────────────────
@@ -151,6 +157,78 @@ public class StudentExamController {
         String studentEmail = authentication.getName();
         examAttemptService.saveAnswer(attemptId, answerDto, studentEmail);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/student/submitExam — submit answers and receive the evaluated result.
+     *
+     * Finalises an IN_PROGRESS attempt, evaluates all supplied answers against the
+     * question correct answers, persists StudentAnswer records with isCorrect flags,
+     * and returns a ResultResponse with score, percentage, grade, and pass/fail.
+     *
+     * Requirements: 11.1–11.9
+     */
+    @PostMapping("/submitExam")
+    @Operation(
+            summary = "Submit exam attempt",
+            description = "Submits an IN_PROGRESS exam attempt. Evaluates each supplied answer " +
+                    "against the question's correct answer, persists a Result, and returns it. " +
+                    "The attempt status transitions to SUBMITTED and cannot be submitted again."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Exam submitted and result returned",
+                    content = @Content(schema = @Schema(implementation = ResultResponse.class))
+            ),
+            @ApiResponse(responseCode = "400",
+                    description = "Validation error in request body"),
+            @ApiResponse(responseCode = "403",
+                    description = "Caller does not own the attempt"),
+            @ApiResponse(responseCode = "404",
+                    description = "Attempt or question not found"),
+            @ApiResponse(responseCode = "409",
+                    description = "Attempt is not IN_PROGRESS (already SUBMITTED or TIMED_OUT)"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    })
+    public ResponseEntity<ResultResponse> submitExam(
+            @Valid @RequestBody SubmitExamRequest submitExamRequest,
+            Authentication authentication) {
+        String studentEmail = authentication.getName();
+        ResultResponse result = examAttemptService.submitExam(submitExamRequest, studentEmail);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /api/student/result/{attemptId} — retrieve the evaluated result for a submitted attempt.
+     *
+     * Requirements: 13.1–13.3
+     */
+    @GetMapping("/result/{attemptId}")
+    @Operation(
+            summary = "Get exam result",
+            description = "Returns the evaluated result for the given attempt. " +
+                    "The caller must own the attempt; otherwise 403 is returned. " +
+                    "Returns 404 if no result exists yet (attempt not yet evaluated)."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Result returned successfully",
+                    content = @Content(schema = @Schema(implementation = ResultResponse.class))
+            ),
+            @ApiResponse(responseCode = "403",
+                    description = "Caller does not own the attempt"),
+            @ApiResponse(responseCode = "404",
+                    description = "Attempt or result not found"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    })
+    public ResponseEntity<ResultResponse> getResult(
+            @Parameter(description = "ID of the exam attempt", required = true)
+            @PathVariable Long attemptId,
+            Authentication authentication) {
+        String studentEmail = authentication.getName();
+        return ResponseEntity.ok(resultService.getResult(attemptId, studentEmail));
     }
 
     /**

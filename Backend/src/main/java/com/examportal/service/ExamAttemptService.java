@@ -1,8 +1,10 @@
 package com.examportal.service;
 
 import com.examportal.dto.request.AnswerDto;
+import com.examportal.dto.request.SubmitExamRequest;
 import com.examportal.dto.response.AttemptSummaryResponse;
 import com.examportal.dto.response.ExamAttemptResponse;
+import com.examportal.dto.response.ResultResponse;
 
 import java.util.List;
 
@@ -70,6 +72,34 @@ public interface ExamAttemptService {
      * Requirements: 10.1–10.4
      */
     void saveAnswer(Long attemptId, AnswerDto answerDto, String studentEmail);
+
+    /**
+     * Submits an in-progress exam attempt, evaluates all answers, and returns the result.
+     *
+     * <p>Preconditions:
+     * <ul>
+     *   <li>The attempt identified by {@code request.attemptId} exists.</li>
+     *   <li>The JWT subject ({@code callerEmail}) matches the attempt's student email.</li>
+     *   <li>The attempt status is IN_PROGRESS.</li>
+     * </ul>
+     *
+     * <p>Postconditions:
+     * <ul>
+     *   <li>attempt.submitTime == now(), attempt.attemptStatus == SUBMITTED.</li>
+     *   <li>StudentAnswer records are persisted with {@code isCorrect} flags set.</li>
+     *   <li>A Result record is created via ResultService.evaluate and returned.</li>
+     * </ul>
+     *
+     * @param request     submission payload containing attemptId and list of answers
+     * @param callerEmail JWT subject of the authenticated student
+     * @return result response with score, percentage, grade, and pass/fail
+     * @throws com.examportal.exception.ResourceNotFoundException   if attempt or question not found (404)
+     * @throws com.examportal.exception.UnauthorizedAccessException if caller does not own the attempt (403)
+     * @throws com.examportal.exception.ExamNotAvailableException   if attempt is not IN_PROGRESS (409)
+     *
+     * Requirements: 11.1–11.9
+     */
+    ResultResponse submitExam(SubmitExamRequest request, String callerEmail);
 
     /**
      * Returns a list of all past attempt summaries for the authenticated student.

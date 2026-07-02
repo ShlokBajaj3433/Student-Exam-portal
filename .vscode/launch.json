@@ -9,6 +9,16 @@
             "projectName": "restapi",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ExamPortalApplication<restapi>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.examportal.ExamPortalApplication",
+            "projectName": "restapi",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

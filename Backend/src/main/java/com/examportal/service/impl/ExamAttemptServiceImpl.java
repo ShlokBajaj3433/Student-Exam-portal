@@ -1,8 +1,10 @@
 package com.examportal.service.impl;
 
 import com.examportal.dto.request.AnswerDto;
+import com.examportal.dto.request.SubmitExamRequest;
 import com.examportal.dto.response.AttemptSummaryResponse;
 import com.examportal.dto.response.ExamAttemptResponse;
+import com.examportal.dto.response.ResultResponse;
 import com.examportal.entity.*;
 import com.examportal.enums.AttemptStatus;
 import com.examportal.enums.ExamStatus;
@@ -12,6 +14,7 @@ import com.examportal.exception.ResourceNotFoundException;
 import com.examportal.exception.UnauthorizedAccessException;
 import com.examportal.repository.*;
 import com.examportal.service.ExamAttemptService;
+import com.examportal.service.ResultService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,17 +40,20 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     private final ExamRepository examRepository;
     private final QuestionRepository questionRepository;
     private final StudentAnswerRepository studentAnswerRepository;
+    private final ResultService resultService;
 
     public ExamAttemptServiceImpl(ExamAttemptRepository attemptRepository,
                                   StudentRepository studentRepository,
                                   ExamRepository examRepository,
                                   QuestionRepository questionRepository,
-                                  StudentAnswerRepository studentAnswerRepository) {
+                                  StudentAnswerRepository studentAnswerRepository,
+                                  ResultService resultService) {
         this.attemptRepository = attemptRepository;
         this.studentRepository = studentRepository;
         this.examRepository = examRepository;
         this.questionRepository = questionRepository;
         this.studentAnswerRepository = studentAnswerRepository;
+        this.resultService = resultService;
     }
 
     /**
@@ -118,6 +124,81 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
         // Return response — QuestionResponse.from() intentionally omits correctAnswer (Requirement 18.6)
         return ExamAttemptResponse.from(saved, questions);
+    }
+
+    /**
+     * Submits an in-progress exam attempt, evaluates all answers, and returns the result.
+     *
+     * <p>Flow:
+     * <ol>
+     *   <li>Load the attempt or throw 404.</li>
+     *   <li>Verify ownership via JWT subject — throw 403 if mismatch.</li>
+     *   <li>Verify attempt is IN_PROGRESS — throw 409 if already SUBMITTED or TIMED_OUT.</li>
+     *   <li>For each AnswerDto: persist a StudentAnswer with isCorrect flag evaluated against
+     *       the question's correctAnswer. Previously saved (in-progress) answers are overridden
+     *       by the answers supplied in the submit request.</li>
+     *   <li>Set submitTime = now(), status = SUBMITTED, persist.</li>
+     *   <li>Delegate to ResultService.evaluate and return the ResultResponse.</li>
+     * </ol>
+     *
+     * Requirements: 11.1–11.9
+     */
+    @Override
+    public ResultResponse submitExam(SubmitExamRequest request, String callerEmail) {
+        // 1. Fetch attempt or 404
+        ExamAttempt attempt = attemptRepository.findById(request.attemptId())
+                .orElseThrow(() -> new ResourceNotFoundException("ExamAttempt", request.attemptId()));
+
+        // 2. Ownership verification — JWT subject must match attempt's student (Requirement 11.2, 18.8)
+        String ownerEmail = attempt.getStudent().getUser().getEmail();
+        if (!ownerEmail.equals(callerEmail)) {
+            throw new UnauthorizedAccessException(
+                    "You are not authorized to submit attempt ID: " + request.attemptId());
+        }
+
+        // 3. Verify attempt is IN_PROGRESS → 409 if SUBMITTED or TIMED_OUT (Requirement 11.3)
+        if (attempt.getAttemptStatus() != AttemptStatus.IN_PROGRESS) {
+            throw new ExamNotAvailableException(
+                    "This attempt cannot be submitted. Current status: " + attempt.getAttemptStatus());
+        }
+
+        // 4. Build and persist StudentAnswer records with isCorrect flags (Requirement 11.4)
+        //    The submit request's answers override any in-progress saves for the same question.
+        List<StudentAnswer> studentAnswers = new ArrayList<>();
+        for (AnswerDto answerDto : request.answers()) {
+            Question question = questionRepository.findById(answerDto.questionId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Question", answerDto.questionId()));
+
+            // Upsert: reuse existing record if present (to avoid duplicate rows)
+            StudentAnswer sa = studentAnswerRepository
+                    .findByAttemptAndQuestion(attempt, question)
+                    .orElseGet(() -> {
+                        StudentAnswer newSa = new StudentAnswer();
+                        newSa.setAttempt(attempt);
+                        newSa.setQuestion(question);
+                        return newSa;
+                    });
+
+            Character selectedOption = answerDto.selectedOptionChar();
+            sa.setSelectedOption(selectedOption);
+
+            // isCorrect: true iff selectedOption is non-null AND matches correctAnswer (Requirement 11.4, Property 13)
+            sa.setIsCorrect(
+                    selectedOption != null &&
+                    selectedOption.equals(question.getCorrectAnswer())
+            );
+
+            studentAnswers.add(sa);
+        }
+        studentAnswerRepository.saveAll(studentAnswers);
+
+        // 5. Mark attempt as SUBMITTED (Requirements 11.1, 11.9)
+        attempt.setSubmitTime(LocalDateTime.now());
+        attempt.setAttemptStatus(AttemptStatus.SUBMITTED);
+        attemptRepository.save(attempt);
+
+        // 6. Evaluate and return the result (Requirements 11.5–11.8)
+        return resultService.evaluate(attempt, studentAnswers);
     }
 
     /**
@@ -243,8 +324,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                 attempt.setAttemptStatus(AttemptStatus.TIMED_OUT);
                 attempt.setSubmitTime(now);
                 attemptRepository.save(attempt);
-                // Result evaluation will be wired in Task 14 when ResultService is implemented.
-                // The attempt is correctly marked TIMED_OUT so no data is lost.
+                resultService.evaluate(attempt, attempt.getAnswers());
             }
         }
     }

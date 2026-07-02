@@ -2,7 +2,7 @@
   "info": {
     "name": "Online Examination System",
     "_postman_id": "exam-portal-collection-v1",
-    "description": "Complete API collection for the Online Examination System.\n\nUsage:\n1. Set the `baseUrl` variable (default: http://localhost:8081).\n2. Run **Register Admin** and **Login Admin** — the token is saved automatically to `adminToken`.\n3. Run **Register Student** and **Login Student** — the token is saved to `studentToken`.\n4. All subsequent requests pick up the correct token from collection variables automatically.\n\nVariables used:\n- `baseUrl`       — base URL of the running API\n- `adminToken`    — JWT for the ADMIN user (auto-set by Login Admin)\n- `studentToken`  — JWT for the STUDENT user (auto-set by Login Student)\n- `examId`        — set manually or via a Create Exam test script\n- `questionId`    — set manually or via a Create Question test script\n- `attemptId`     — set manually or via a Start Exam test script",
+    "description": "Complete API collection for the Online Examination System.\n\nUsage:\n1. Set the `baseUrl` variable (default: http://localhost:8081).\n2. Run **Register Admin** and **Login Admin** — the token is saved automatically to `adminToken`.\n3. Run **Register Student** and **Login Student** — the token is saved to `studentToken`.\n4. Use the new **Student Exam Flow** folder for browsing exams, starting attempts, saving answers, and submitting results.\n5. All subsequent requests pick up the correct token from collection variables automatically.\n\nVariables used:\n- `baseUrl`       — base URL of the running API\n- `adminToken`    — JWT for the ADMIN user (auto-set by Login Admin)\n- `studentToken`  — JWT for the STUDENT user (auto-set by Login Student)\n- `examId`        — set manually or via a Create Exam test script\n- `questionId`    — set manually or via a Create Question test script\n- `attemptId`     — set manually or via a Start Exam test script",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -311,6 +311,7 @@
 
         {
           "name": "Publish Exam - No Questions (expect 409)",
+          "description": "Run this against a fresh DRAFT exam that has no questions assigned. The same publish endpoint is used; the conflict depends on exam state.",
           "request": {
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
@@ -443,6 +444,7 @@
 
         {
           "name": "Delete Question in Published Exam (expect 409)",
+          "description": "Run this after assigning the question to a PUBLISHED exam. The endpoint is the same as the normal delete call; the 409 comes from question usage state.",
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
@@ -467,6 +469,125 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
             "url": { "raw": "{{baseUrl}}/api/questions", "host": ["{{baseUrl}}"], "path": ["api","questions"] }
+          },
+          "response": []
+        }
+
+      ]
+    },
+
+    {
+      "name": "Student Exam Flow",
+      "description": "Student-only exam browsing, attempt lifecycle, answer saving, submission, and result retrieval. All requests use studentToken.",
+      "item": [
+
+        {
+          "name": "List Available Exams",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/exams?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","student","exams"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Start Exam",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/startExam?examId={{examId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","student","startExam"],
+              "query": [
+                { "key": "examId", "value": "{{examId}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const attemptId = pm.response.json().attemptId;",
+                  "  pm.collectionVariables.set('attemptId', attemptId);",
+                  "  console.log('attemptId saved:', attemptId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+
+        {
+          "name": "Save Answer",
+          "description": "Use selectedOption = null to mark a skipped question. The question must belong to the started exam attempt.",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/answer?attemptId={{attemptId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","student","answer"],
+              "query": [
+                { "key": "attemptId", "value": "{{attemptId}}" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": {{questionId}},\n  \"selectedOption\": \"A\"\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Submit Exam",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/student/submitExam", "host": ["{{baseUrl}}"], "path": ["api","student","submitExam"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attemptId\": {{attemptId}},\n  \"answers\": [\n    {\n      \"questionId\": {{questionId}},\n      \"selectedOption\": \"A\"\n    }\n  ]\n}"
+            }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Get Result",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/student/result/{{attemptId}}", "host": ["{{baseUrl}}"], "path": ["api","student","result","{{attemptId}}"] }
+          },
+          "response": []
+        },
+
+        {
+          "name": "Attempt History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/student/attempts", "host": ["{{baseUrl}}"], "path": ["api","student","attempts"] }
           },
           "response": []
         }
