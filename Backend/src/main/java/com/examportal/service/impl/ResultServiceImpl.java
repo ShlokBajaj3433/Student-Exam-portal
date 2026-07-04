@@ -117,4 +117,15 @@ public class ResultServiceImpl implements ResultService {
     public Page<ResultResponse> getAllResults(Pageable pageable) {
         return resultRepository.findAll(pageable).map(ResultResponse::from);
     }
+
+    /**
+     * Admin-only: returns results for a specific exam, paginated.
+     *
+     * Requirements: 14.3
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ResultResponse> getResultsByExam(Long examId, Pageable pageable) {
+        return resultRepository.findByExamId(examId, pageable).map(ResultResponse::from);
+    }
 }

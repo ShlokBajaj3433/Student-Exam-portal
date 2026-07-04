@@ -26,4 +26,9 @@ public interface ResultService {
      * Admin-only: returns all results paginated.
      */
     Page<ResultResponse> getAllResults(Pageable pageable);
+
+    /**
+     * Admin-only: returns results for a specific exam, paginated.
+     */
+    Page<ResultResponse> getResultsByExam(Long examId, Pageable pageable);
 }

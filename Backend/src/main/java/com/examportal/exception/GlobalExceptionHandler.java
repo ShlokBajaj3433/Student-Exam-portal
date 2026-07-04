@@ -2,6 +2,7 @@ package com.examportal.exception;
 
 import com.examportal.dto.response.ErrorResponse;
 import com.examportal.dto.response.ValidationErrorResponse;
+import com.examportal.exception.BadRequestException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,22 @@ import java.util.List;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * Handle BadRequestException → 400 Bad Request
+     * For example: admin attempting to delete their own account.
+     */
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+        log.debug("Bad request: {}", ex.getMessage());
+        ErrorResponse response = ErrorResponse.of(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage()
+        );
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(response);
+    }
 
     /**
      * Handle ResourceNotFoundException → 404 Not Found
