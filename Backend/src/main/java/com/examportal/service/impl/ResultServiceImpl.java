@@ -22,8 +22,6 @@ import java.util.List;
 
 /**
  * Service implementation for result evaluation and retrieval.
- *
- * Requirements: 11.5, 11.6, 11.7, 11.8, 13.1, 13.2, 13.3, 14.1
  */
 @Service
 public class ResultServiceImpl implements ResultService {
@@ -46,8 +44,6 @@ public class ResultServiceImpl implements ResultService {
      *
      * <p>Only answers where {@code isCorrect == true} contribute marks.
      * Unanswered questions contribute 0 marks.
-     *
-     * Requirements: 11.5, 11.6, 11.7, 11.8
      */
     @Override
     @Transactional
@@ -88,8 +84,6 @@ public class ResultServiceImpl implements ResultService {
      *
      * @throws ResourceNotFoundException   if the attempt or result does not exist (404)
      * @throws UnauthorizedAccessException if callerEmail does not match the attempt owner (403)
-     *
-     * Requirements: 13.1, 13.2, 13.3
      */
     @Override
     @Transactional(readOnly = true)
@@ -109,8 +103,6 @@ public class ResultServiceImpl implements ResultService {
 
     /**
      * Admin-only: returns all results paginated.
-     *
-     * Requirements: 14.1
      */
     @Override
     @Transactional(readOnly = true)
@@ -120,8 +112,7 @@ public class ResultServiceImpl implements ResultService {
 
     /**
      * Admin-only: returns results for a specific exam, paginated.
-     *
-     * Requirements: 14.3
+
      */
     @Override
     @Transactional(readOnly = true)

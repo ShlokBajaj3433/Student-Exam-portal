@@ -2,13 +2,16 @@ package com.examportal.controller;
 
 import com.examportal.dto.request.AnswerDto;
 import com.examportal.dto.request.SubmitExamRequest;
+import com.examportal.dto.request.UpdateProfileRequest;
 import com.examportal.dto.response.AttemptSummaryResponse;
 import com.examportal.dto.response.ExamAttemptResponse;
 import com.examportal.dto.response.ExamResponse;
 import com.examportal.dto.response.ResultResponse;
+import com.examportal.dto.response.StudentProfileResponse;
 import com.examportal.service.ExamAttemptService;
 import com.examportal.service.ExamService;
 import com.examportal.service.ResultService;
+import com.examportal.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -46,13 +49,16 @@ public class StudentExamController {
     private final ExamService examService;
     private final ExamAttemptService examAttemptService;
     private final ResultService resultService;
+    private final UserService userService;
 
     public StudentExamController(ExamService examService,
                                  ExamAttemptService examAttemptService,
-                                 ResultService resultService) {
+                                 ResultService resultService,
+                                 UserService userService) {
         this.examService = examService;
         this.examAttemptService = examAttemptService;
         this.resultService = resultService;
+        this.userService = userService;
     }
 
     // ─── Exam browsing ────────────────────────────────────────────────────────
@@ -251,5 +257,73 @@ public class StudentExamController {
             Authentication authentication) {
         String studentEmail = authentication.getName();
         return ResponseEntity.ok(examAttemptService.getAttemptHistory(studentEmail));
+    }
+
+    // ─── Student profile management ───────────────────────────────────────────
+
+    /**
+     * GET /api/student/profile — retrieve the authenticated student's own profile.
+     *
+     * Resolves the student from the JWT subject (email), looks up the linked
+     * Student profile, and returns a {@link StudentProfileResponse}.
+     *
+     * Requirements: 8.2
+     */
+    @GetMapping("/profile")
+    @Operation(
+            summary = "Get student profile",
+            description = "Returns the authenticated student's profile data, " +
+                    "including name, email, department, and year of study."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Profile returned successfully",
+                    content = @Content(schema = @Schema(implementation = StudentProfileResponse.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller does not have STUDENT role"),
+            @ApiResponse(responseCode = "404", description = "Student profile not found")
+    })
+    public ResponseEntity<StudentProfileResponse> getProfile(Authentication authentication) {
+        String studentEmail = authentication.getName();
+        return ResponseEntity.ok(userService.getStudentProfile(studentEmail));
+    }
+
+    /**
+     * PUT /api/student/profile — update the authenticated student's own profile.
+     *
+     * Updates {@code name} on the User entity and {@code department} / {@code yearOfStudy}
+     * on the Student entity. Only non-null fields are applied (partial update).
+     *
+     * Ownership is inherently validated because the JWT subject IS the student
+     * being updated — no path parameter is accepted to prevent targeting other profiles.
+     * Requirement 8.3 (403 if accessing another student's profile) is satisfied by
+     * design: this endpoint only ever touches the JWT-authenticated student.
+     *
+     * Requirements: 8.1, 8.3
+     */
+    @PutMapping("/profile")
+    @Operation(
+            summary = "Update student profile",
+            description = "Updates the authenticated student's name, department, or year of study. " +
+                    "Only supplied (non-null) fields are updated. Returns the updated profile."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Profile updated successfully",
+                    content = @Content(schema = @Schema(implementation = StudentProfileResponse.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error in request body"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
+            @ApiResponse(responseCode = "403", description = "Caller does not have STUDENT role"),
+            @ApiResponse(responseCode = "404", description = "Student profile not found")
+    })
+    public ResponseEntity<StudentProfileResponse> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            Authentication authentication) {
+        String studentEmail = authentication.getName();
+        return ResponseEntity.ok(userService.updateStudentProfile(studentEmail, request));
     }
 }

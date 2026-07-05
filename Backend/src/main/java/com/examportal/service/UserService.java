@@ -1,14 +1,15 @@
 package com.examportal.service;
 
+import com.examportal.dto.request.UpdateProfileRequest;
 import com.examportal.dto.request.UpdateUserRequest;
+import com.examportal.dto.response.StudentProfileResponse;
 import com.examportal.dto.response.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Service interface for admin-facing user account management.
- *
- * Requirements: 15.1–15.4, 18.6
+ * Service interface for admin-facing user account management and
+ * student self-service profile operations.
  */
 public interface UserService {
 
@@ -36,4 +37,27 @@ public interface UserService {
      * @param callerEmail the email of the admin performing the deletion (from JWT)
      */
     void deleteUser(Long userId, String callerEmail);
+
+    /**
+     * Returns the student profile for the authenticated student identified by email.
+     * Throws ResourceNotFoundException (404) if no matching user or student exists.
+     *
+     * @param email the JWT subject (authenticated student's email)
+     * @return the student's profile data
+     */
+    StudentProfileResponse getStudentProfile(String email);
+
+    /**
+     * Updates the authenticated student's own profile.
+     * Updates user.name, student.department, and student.yearOfStudy for non-null fields.
+     *
+     * Since this endpoint is student-facing and the JWT subject IS the student,
+     * ownership is inherently validated (callerEmail resolves the profile being updated).
+     * Throws ResourceNotFoundException (404) if no matching user or student exists.
+     *
+     * @param email   the JWT subject (authenticated student's email)
+     * @param request fields to update; null values are ignored
+     * @return the updated student profile
+     */
+    StudentProfileResponse updateStudentProfile(String email, UpdateProfileRequest request);
 }
