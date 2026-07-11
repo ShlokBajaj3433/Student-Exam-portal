@@ -21,10 +21,20 @@ function decodeToken(token) {
     // jwtDecode expiry is in seconds; Date.now() is in milliseconds
     const isExpired = decoded.exp && decoded.exp * 1000 < Date.now();
     if (isExpired) return null;
+
+    // The backend puts roles as a list: ["ROLE_ADMIN"] or ["ROLE_STUDENT"]
+    // Extract the first entry and strip the "ROLE_" prefix so the frontend
+    // can compare against plain "ADMIN" / "STUDENT".
+    const rawRoles = decoded.roles ?? decoded.role ?? [];
+    const firstRole = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+    const role = typeof firstRole === 'string'
+      ? firstRole.replace(/^ROLE_/, '')
+      : '';
+
     return {
       name: decoded.name ?? decoded.sub ?? '',
       email: decoded.email ?? decoded.sub ?? '',
-      role: decoded.role ?? decoded.roles ?? '',
+      role,
     };
   } catch {
     return null;

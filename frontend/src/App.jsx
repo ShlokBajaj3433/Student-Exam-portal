@@ -5,6 +5,18 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Unauthorized from './pages/Unauthorized';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ExamManager from './pages/admin/ExamManager';
+import QuestionBank from './pages/admin/QuestionBank';
+import UserManager from './pages/admin/UserManager';
+import ResultsViewer from './pages/admin/ResultsViewer';
+import Analytics from './pages/admin/Analytics';
+import StudentLayout from './components/layout/StudentLayout';
+import AvailableExams from './pages/student/AvailableExams';
+import AttemptHistory from './pages/student/AttemptHistory';
+import ExamWorkspace from './pages/student/ExamWorkspace';
+import Result from './pages/student/Result';
 
 // ---------------------------------------------------------------------------
 // GuestRoute — redirects already-authenticated users away from /login and
@@ -52,28 +64,29 @@ function AppRoutes() {
 
       {/* Protected admin routes */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-        <Route
-          path="/admin/dashboard"
-          element={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <h1 className="text-2xl font-semibold text-gray-700">Admin Dashboard</h1>
-            </div>
-          }
-        />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/exams" element={<ExamManager />} />
+          <Route path="/admin/questions" element={<QuestionBank />} />
+          <Route path="/admin/users" element={<UserManager />} />
+          <Route path="/admin/results" element={<ResultsViewer />} />
+          <Route path="/admin/analytics" element={<Analytics />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        </Route>
         <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
 
       {/* Protected student routes */}
       <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
-        <Route
-          path="/student/dashboard"
-          element={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <h1 className="text-2xl font-semibold text-gray-700">Student Dashboard</h1>
-            </div>
-          }
-        />
-        <Route path="/student/*" element={<Navigate to="/student/dashboard" replace />} />
+        <Route element={<StudentLayout />}>
+          <Route path="/student/dashboard" element={<Navigate to="/student/exams" replace />} />
+          <Route path="/student/exams" element={<AvailableExams />} />
+          <Route path="/student/attempts" element={<AttemptHistory />} />
+          <Route path="/student/result/:attemptId" element={<Result />} />
+        </Route>
+        <Route path="/student/exam/:attemptId" element={<ExamWorkspace />} />
+        <Route path="/student" element={<Navigate to="/student/exams" replace />} />
+        <Route path="/student/*" element={<Navigate to="/student/exams" replace />} />
       </Route>
 
       {/* Root — redirect to login (AuthContext / GuestRoute will push to dashboard if already logged in) */}
