@@ -4,8 +4,12 @@ import api from './api';
  * questionService — wraps all /api/questions endpoints
  */
 
-export function getQuestions(page = 0, size = 10) {
+export function getQuestions(page = 0, size = 12) {
   return api.get('/api/questions', { params: { page, size } });
+}
+
+export function getQuestionById(id) {
+  return api.get(`/api/questions/${id}`);
 }
 
 export function createQuestion(data) {

@@ -9,6 +9,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ExamManager from './pages/admin/ExamManager';
 import QuestionBank from './pages/admin/QuestionBank';
+import QuestionEditor from './pages/admin/QuestionEditor';
 import UserManager from './pages/admin/UserManager';
 import ResultsViewer from './pages/admin/ResultsViewer';
 import Analytics from './pages/admin/Analytics';
@@ -68,12 +69,13 @@ function AppRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/exams" element={<ExamManager />} />
           <Route path="/admin/questions" element={<QuestionBank />} />
+          <Route path="/admin/questions/new" element={<QuestionEditor />} />
+          <Route path="/admin/questions/:id/edit" element={<QuestionEditor />} />
           <Route path="/admin/users" element={<UserManager />} />
           <Route path="/admin/results" element={<ResultsViewer />} />
           <Route path="/admin/analytics" element={<Analytics />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
-        <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
 
       {/* Protected student routes */}
