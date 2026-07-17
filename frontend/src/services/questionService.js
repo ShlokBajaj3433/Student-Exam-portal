@@ -1,7 +1,9 @@
 import api from './api';
 
 /**
- * questionService — wraps all /api/questions endpoints
+ * questionService — wraps all /api/questions endpoints.
+ * The backend now returns AdminQuestionResponse (includes answer fields)
+ * for all admin CRUD operations.
  */
 
 export function getQuestions(page = 0, size = 12) {

@@ -1,22 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  HelpCircle,
-  CheckCircle2,
-  Filter,
-  X,
+  Plus, Pencil, Trash2, ChevronLeft, ChevronRight,
+  Search, HelpCircle, CheckCircle2, Filter, X, AlignLeft, ListChecks, Circle,
 } from 'lucide-react';
 import { getQuestions, deleteQuestion } from '../../services/questionService';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const DIFFICULTY_OPTIONS = ['EASY', 'MEDIUM', 'HARD'];
+
+const TYPE_STYLES = {
+  MCQ:             { label: 'MCQ',      icon: Circle,      color: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
+  MULTIPLE_CHOICE: { label: 'Multi',    icon: ListChecks,  color: 'bg-violet-50 text-violet-600 border-violet-200' },
+  SHORT_ANSWER:    { label: 'Short Ans', icon: AlignLeft,  color: 'bg-teal-50 text-teal-600 border-teal-200' },
+};
 
 const DIFFICULTY_STYLES = {
   EASY: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -84,6 +82,15 @@ function QuestionCard({ question, onEdit, onDelete }) {
       <div className="px-5 pt-5 pb-3 flex-1">
         {/* Badges row */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {question.questionType && (() => {
+            const t = TYPE_STYLES[question.questionType] || {};
+            const Icon = t.icon || Circle;
+            return (
+              <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${t.color || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                <Icon size={10} />{t.label || question.questionType}
+              </span>
+            );
+          })()}
           {question.difficultyLevel && (
             <span
               className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
@@ -103,39 +110,44 @@ function QuestionCard({ question, onEdit, onDelete }) {
           {question.questionText}
         </p>
 
-        {/* Options */}
+        {/* Options — only for choice-based types */}
+        {(question.questionType !== 'SHORT_ANSWER') && (
         <div className="space-y-1.5">
           {options.map(({ key, text }) => {
-            const isCorrect = question.correctAnswer === key;
+            const isCorrectMCQ = question.questionType === 'MCQ' && question.correctAnswer === key;
+            const isCorrectMulti = question.questionType === 'MULTIPLE_CHOICE' &&
+              question.correctAnswers && question.correctAnswers.split(',').includes(key);
+            const isCorrect = isCorrectMCQ || isCorrectMulti;
             return (
-              <div
-                key={key}
+              <div key={key}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors
-                  ${isCorrect
-                    ? 'bg-emerald-50 border border-emerald-200'
-                    : 'bg-gray-50 border border-transparent'
-                  }`}
+                  ${isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-gray-50 border border-transparent'}`}
               >
-                <span
-                  className={`w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${OPTION_COLORS[key]}`}
-                >
+                <span className={`w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${OPTION_COLORS[key]}`}>
                   {key}
                 </span>
                 <span className={`flex-1 line-clamp-1 ${isCorrect ? 'text-emerald-700 font-medium' : 'text-gray-600'}`}>
                   {text}
                 </span>
-                {isCorrect && (
-                  <CheckCircle2 size={13} className="flex-shrink-0 text-emerald-600" />
-                )}
+                {isCorrect && <CheckCircle2 size={13} className="flex-shrink-0 text-emerald-600" />}
               </div>
             );
           })}
         </div>
+        )}
+
+        {/* Model answer indicator for SHORT_ANSWER */}
+        {question.questionType === 'SHORT_ANSWER' && (
+          <div className="flex items-start gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-700">
+            <AlignLeft size={13} className="flex-shrink-0 mt-0.5" />
+            <span className="line-clamp-3">{question.modelAnswer || 'No model answer set.'}</span>
+          </div>
+        )}
       </div>
 
       {/* Card footer */}
       <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-[11px] text-gray-400">ID #{question.id}</span>
+        <span className="text-[11px] text-gray-400">ID #{question.questionId}</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => onEdit(question)}
@@ -260,7 +272,7 @@ function QuestionBank() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      await deleteQuestion(pendingDelete.id);
+      await deleteQuestion(pendingDelete.questionId);
       setPendingDelete(null);
       fetchQuestions();
     } catch (err) {
@@ -369,7 +381,7 @@ function QuestionBank() {
               <QuestionCard
                 key={q.id}
                 question={q}
-                onEdit={(q) => navigate(`/admin/questions/${q.id}/edit`)}
+                onEdit={(q) => navigate(`/admin/questions/${q.questionId}/edit`)}
                 onDelete={setPendingDelete}
               />
             ))

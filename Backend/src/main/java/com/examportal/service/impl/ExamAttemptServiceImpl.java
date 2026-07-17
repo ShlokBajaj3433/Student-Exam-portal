@@ -181,12 +181,12 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
 
             Character selectedOption = answerDto.selectedOptionChar();
             sa.setSelectedOption(selectedOption);
+            sa.setSelectedOptions(answerDto.selectedOptions());
+            sa.setWrittenAnswer(answerDto.writtenAnswer());
 
-            // isCorrect: true iff selectedOption is non-null AND matches correctAnswer (Requirement 11.4, Property 13)
-            sa.setIsCorrect(
-                    selectedOption != null &&
-                    selectedOption.equals(question.getCorrectAnswer())
-            );
+            // Evaluate correctness per question type
+            sa.setIsCorrect(evaluateAnswer(question, selectedOption,
+                    answerDto.selectedOptions(), answerDto.writtenAnswer()));
 
             studentAnswers.add(sa);
         }
@@ -264,8 +264,9 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                 });
 
         studentAnswer.setSelectedOption(finalOption);
-        // isCorrect is not evaluated here — it is set during submission/auto-timeout
-        // to keep answer saving lightweight (Requirement 10.1)
+        studentAnswer.setSelectedOptions(answerDto.selectedOptions());
+        studentAnswer.setWrittenAnswer(answerDto.writtenAnswer());
+        // isCorrect is not evaluated during in-progress saving (lightweight path)
         studentAnswer.setIsCorrect(null);
 
         studentAnswerRepository.save(studentAnswer);
@@ -330,6 +331,34 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     }
 
     // ─── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Evaluates whether a student answer is correct based on question type.
+     *
+     * <ul>
+     *   <li>MCQ            – selectedOption must match question.correctAnswer</li>
+     *   <li>MULTIPLE_CHOICE– selectedOptions (sorted) must exactly match question.correctAnswers</li>
+     *   <li>SHORT_ANSWER   – returns null (pending manual grading)</li>
+     * </ul>
+     */
+    private Boolean evaluateAnswer(Question question,
+                                    Character selectedOption,
+                                    String selectedOptions,
+                                    String writtenAnswer) {
+        return switch (question.getQuestionType()) {
+            case MCQ -> selectedOption != null && selectedOption.equals(question.getCorrectAnswer());
+            case MULTIPLE_CHOICE -> {
+                if (selectedOptions == null || selectedOptions.isBlank()) yield false;
+                String normalized = java.util.Arrays.stream(selectedOptions.split(","))
+                        .map(String::trim).map(String::toUpperCase)
+                        .distinct().sorted()
+                        .collect(java.util.stream.Collectors.joining(","));
+                yield normalized.equals(question.getCorrectAnswers());
+            }
+            // SHORT_ANSWER requires manual grading — null means "not yet evaluated"
+            case SHORT_ANSWER -> null;
+        };
+    }
 
     /**
      * Validates that the current time is within the exam's start/end window.

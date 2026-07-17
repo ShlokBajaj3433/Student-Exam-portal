@@ -1,6 +1,7 @@
 package com.examportal.dto.request;
 
 import com.examportal.enums.Difficulty;
+import com.examportal.enums.QuestionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -8,50 +9,69 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * Request DTO for creating a new question in the question bank.
- * Requirements: 5.1–5.4, 17.8–17.9
+ * Request DTO for creating a new question.
+ *
+ * <p>Field requirements vary by questionType:
+ * <ul>
+ *   <li>MCQ            — optionA–D required, correctAnswer required (A/B/C/D), correctAnswers null, modelAnswer null</li>
+ *   <li>MULTIPLE_CHOICE— optionA–D required, correctAnswers required (e.g. "A,C"), correctAnswer null, modelAnswer null</li>
+ *   <li>SHORT_ANSWER   — optionA–D null, correctAnswer null, correctAnswers null, modelAnswer required</li>
+ * </ul>
+ *
+ * Cross-field validation is enforced in QuestionServiceImpl.
  */
-@Schema(description = "Request body for creating a new multiple-choice question")
+@Schema(description = "Request body for creating a question. Supply fields appropriate for the chosen questionType.")
 public record CreateQuestionRequest(
 
-        @Schema(description = "The question text", example = "Which keyword is used to prevent method overriding in Java?", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "Question type", example = "MCQ",
+                allowableValues = {"MCQ", "MULTIPLE_CHOICE", "SHORT_ANSWER"},
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull(message = "Question type must not be null")
+        QuestionType questionType,
+
+        @Schema(description = "The question text", example = "Which of the following are valid Java access modifiers?",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Question text must not be blank")
         String questionText,
 
-        @Schema(description = "Text for option A", example = "static", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "Option A must not be blank")
+        @Schema(description = "Option A text — required for MCQ and MULTIPLE_CHOICE", example = "public")
         String optionA,
 
-        @Schema(description = "Text for option B", example = "final", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "Option B must not be blank")
+        @Schema(description = "Option B text — required for MCQ and MULTIPLE_CHOICE", example = "final")
         String optionB,
 
-        @Schema(description = "Text for option C", example = "abstract", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "Option C must not be blank")
+        @Schema(description = "Option C text — required for MCQ and MULTIPLE_CHOICE", example = "protected")
         String optionC,
 
-        @Schema(description = "Text for option D", example = "private", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "Option D must not be blank")
+        @Schema(description = "Option D text — required for MCQ and MULTIPLE_CHOICE", example = "static")
         String optionD,
 
-        @Schema(description = "The letter of the correct answer — must be A, B, C, or D", example = "B", allowableValues = {"A", "B", "C", "D"}, requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull(message = "Correct answer must not be null")
-        @Pattern(regexp = "[ABCD]", message = "Correct answer must be one of: A, B, C, D")
+        @Schema(description = "Single correct option letter — required for MCQ only",
+                example = "B", allowableValues = {"A", "B", "C", "D"})
+        @Pattern(regexp = "[ABCD]", message = "correctAnswer must be one of: A, B, C, D")
         String correctAnswer,
 
-        @Schema(description = "Marks awarded for a correct answer (minimum 1)", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "Comma-separated correct option letters — required for MULTIPLE_CHOICE only",
+                example = "A,C")
+        String correctAnswers,
+
+        @Schema(description = "Model/reference answer — required for SHORT_ANSWER only",
+                example = "The four access modifiers in Java are public, protected, package-private, and private.")
+        String modelAnswer,
+
+        @Schema(description = "Marks awarded for a fully correct answer (minimum 1)",
+                example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Marks must not be null")
         @Min(value = 1, message = "Marks must be at least 1")
         Integer marks,
 
-        @Schema(description = "Difficulty level of the question", example = "MEDIUM", allowableValues = {"EASY", "MEDIUM", "HARD"})
+        @Schema(description = "Difficulty level", example = "MEDIUM",
+                allowableValues = {"EASY", "MEDIUM", "HARD"})
         Difficulty difficulty
 
 ) {
-    /**
-     * Returns correctAnswer as a Character for mapping to the entity.
-     */
+    /** Returns correctAnswer as a Character, or null if not set. */
     public Character correctAnswerChar() {
-        return correctAnswer != null ? correctAnswer.charAt(0) : null;
+        return correctAnswer != null && !correctAnswer.isBlank() ? correctAnswer.charAt(0) : null;
     }
 }

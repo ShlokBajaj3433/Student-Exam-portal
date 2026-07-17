@@ -2,56 +2,59 @@ package com.examportal.dto.response;
 
 import com.examportal.entity.Question;
 import com.examportal.enums.Difficulty;
+import com.examportal.enums.QuestionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Response DTO for a question.
- * IMPORTANT: correctAnswer is intentionally excluded — it must never be
- * returned to students to prevent answer leakage.
- * Requirements: 5.1, 18.6
+ *
+ * <p>correctAnswer, correctAnswers, and modelAnswer are intentionally
+ * excluded to prevent answer leakage to students. The admin API uses
+ * {@link AdminQuestionResponse} which includes those fields.
  */
-@Schema(description = "A multiple-choice question. The correctAnswer field is intentionally omitted to prevent answer leakage.")
+@Schema(description = "A question as seen by a student — answer fields are omitted.")
 public record QuestionResponse(
 
         @Schema(description = "Unique question ID", example = "42")
         Long questionId,
 
-        @Schema(description = "The question text", example = "Which keyword prevents method overriding in Java?")
+        @Schema(description = "Question type", example = "MCQ")
+        QuestionType questionType,
+
+        @Schema(description = "The question text")
         String questionText,
 
-        @Schema(description = "Text for answer option A", example = "static")
+        @Schema(description = "Option A — null for SHORT_ANSWER questions")
         String optionA,
 
-        @Schema(description = "Text for answer option B", example = "final")
+        @Schema(description = "Option B — null for SHORT_ANSWER questions")
         String optionB,
 
-        @Schema(description = "Text for answer option C", example = "abstract")
+        @Schema(description = "Option C — null for SHORT_ANSWER questions")
         String optionC,
 
-        @Schema(description = "Text for answer option D", example = "private")
+        @Schema(description = "Option D — null for SHORT_ANSWER questions")
         String optionD,
 
-        @Schema(description = "Marks awarded for a correct answer", example = "2")
+        @Schema(description = "Marks awarded for a fully correct answer", example = "2")
         Integer marks,
 
-        @Schema(description = "Difficulty level of the question", example = "MEDIUM")
+        @Schema(description = "Difficulty level", example = "MEDIUM")
         Difficulty difficulty
 
 ) {
-    /**
-     * Converts a {@link Question} entity to a {@code QuestionResponse},
-     * omitting the correct answer.
-     */
-    public static QuestionResponse from(Question question) {
+    /** Builds a student-safe response (no answer fields). */
+    public static QuestionResponse from(Question q) {
         return new QuestionResponse(
-                question.getQuestionId(),
-                question.getQuestionText(),
-                question.getOptionA(),
-                question.getOptionB(),
-                question.getOptionC(),
-                question.getOptionD(),
-                question.getMarks(),
-                question.getDifficulty()
+                q.getQuestionId(),
+                q.getQuestionType(),
+                q.getQuestionText(),
+                q.getOptionA(),
+                q.getOptionB(),
+                q.getOptionC(),
+                q.getOptionD(),
+                q.getMarks(),
+                q.getDifficulty()
         );
     }
 }

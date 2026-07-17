@@ -2,7 +2,7 @@ package com.examportal.controller;
 
 import com.examportal.dto.request.CreateQuestionRequest;
 import com.examportal.dto.request.UpdateQuestionRequest;
-import com.examportal.dto.response.QuestionResponse;
+import com.examportal.dto.response.AdminQuestionResponse;
 import com.examportal.service.QuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,22 +21,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller for admin question bank management operations.
- *
- * All endpoints require ADMIN role, enforced both by the SecurityConfig
- * path rules ({@code /api/questions/**} → ADMIN) and the method-level
- * {@code @PreAuthorize} for defence-in-depth.
-
+ * Admin question bank management. Returns AdminQuestionResponse (includes answer fields).
  */
 @RestController
 @RequestMapping("/api/questions")
@@ -51,116 +39,76 @@ public class QuestionController {
         this.questionService = questionService;
     }
 
-    // GET /api/questions — paginated list of all questions
-
     @GetMapping
-    @Operation(
-            summary = "List all questions",
-            description = "Returns a paginated list of all questions in the question bank (ADMIN only). " +
-                    "The correctAnswer field is intentionally omitted from responses."
-    )
+    @Operation(summary = "List all questions (admin)", description = "Returns paginated question bank including answer fields.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Page of questions returned"),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
-            @ApiResponse(responseCode = "403", description = "Caller does not have ADMIN role")
+            @ApiResponse(responseCode = "200", description = "Page of questions"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
     })
-    public ResponseEntity<Page<QuestionResponse>> getAllQuestions(
+    public ResponseEntity<Page<AdminQuestionResponse>> getAllQuestions(
             @PageableDefault(size = 20, sort = "questionId") Pageable pageable) {
         return ResponseEntity.ok(questionService.getAllQuestions(pageable));
     }
 
-    // POST /api/questions — create a new question
-
     @PostMapping
-    @Operation(
-            summary = "Create a question",
-            description = "Creates a new question in the question bank. " +
-                    "correctAnswer must be one of: A, B, C, D."
-    )
+    @Operation(summary = "Create a question",
+            description = "Supports MCQ, MULTIPLE_CHOICE, and SHORT_ANSWER types.")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Question created successfully",
-                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Validation error in request body"),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
-            @ApiResponse(responseCode = "403", description = "Caller does not have ADMIN role")
+            @ApiResponse(responseCode = "201", description = "Question created",
+                    content = @Content(schema = @Schema(implementation = AdminQuestionResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
     })
-    public ResponseEntity<QuestionResponse> createQuestion(
+    public ResponseEntity<AdminQuestionResponse> createQuestion(
             @Valid @RequestBody CreateQuestionRequest request,
             @AuthenticationPrincipal UserDetails principal) {
-        QuestionResponse created = questionService.createQuestion(request, principal.getUsername());
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(questionService.createQuestion(request, principal.getUsername()));
     }
 
-    // GET /api/questions/{id} — get a single question by ID
-
     @GetMapping("/{id}")
-    @Operation(
-            summary = "Get question by ID",
-            description = "Returns the question with the given ID."
-    )
+    @Operation(summary = "Get question by ID (admin)")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Question found",
-                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))
-            ),
-            @ApiResponse(responseCode = "404", description = "Question not found"),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
-            @ApiResponse(responseCode = "403", description = "Caller does not have ADMIN role")
+            @ApiResponse(responseCode = "200", description = "Question found",
+                    content = @Content(schema = @Schema(implementation = AdminQuestionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
     })
-    public ResponseEntity<QuestionResponse> getQuestion(
-            @Parameter(description = "ID of the question to retrieve") @PathVariable Long id) {
+    public ResponseEntity<AdminQuestionResponse> getQuestion(
+            @Parameter(description = "Question ID") @PathVariable Long id) {
         return ResponseEntity.ok(questionService.getQuestion(id));
     }
 
-    // PUT /api/questions/{id} — update an existing question
-
     @PutMapping("/{id}")
-    @Operation(
-            summary = "Update a question",
-            description = "Updates an existing question. All fields are optional — " +
-                    "only provided (non-null) fields are changed."
-    )
+    @Operation(summary = "Update a question")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Question updated successfully",
-                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Validation error in request body"),
-            @ApiResponse(responseCode = "404", description = "Question not found"),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
-            @ApiResponse(responseCode = "403", description = "Caller does not have ADMIN role")
+            @ApiResponse(responseCode = "200", description = "Question updated",
+                    content = @Content(schema = @Schema(implementation = AdminQuestionResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
     })
-    public ResponseEntity<QuestionResponse> updateQuestion(
-            @Parameter(description = "ID of the question to update") @PathVariable Long id,
+    public ResponseEntity<AdminQuestionResponse> updateQuestion(
+            @Parameter(description = "Question ID") @PathVariable Long id,
             @Valid @RequestBody UpdateQuestionRequest request) {
         return ResponseEntity.ok(questionService.updateQuestion(id, request));
     }
 
-    // DELETE /api/questions/{id} — delete a question
-
     @DeleteMapping("/{id}")
-    @Operation(
-            summary = "Delete a question",
-            description = "Deletes a question from the question bank. " +
-                    "Deletion is rejected with 409 Conflict if the question is assigned to a PUBLISHED exam."
-    )
+    @Operation(summary = "Delete a question")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Question deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Question not found"),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Question is assigned to a PUBLISHED exam and cannot be deleted"
-            ),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token"),
-            @ApiResponse(responseCode = "403", description = "Caller does not have ADMIN role")
+            @ApiResponse(responseCode = "204", description = "Deleted"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "409", description = "Assigned to a PUBLISHED exam"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
     })
     public ResponseEntity<Void> deleteQuestion(
-            @Parameter(description = "ID of the question to delete") @PathVariable Long id) {
+            @Parameter(description = "Question ID") @PathVariable Long id) {
         questionService.deleteQuestion(id);
         return ResponseEntity.noContent().build();
     }

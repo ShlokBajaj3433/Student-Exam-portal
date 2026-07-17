@@ -5,27 +5,39 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * DTO representing a single answer selection within a submit-exam request.
- * selectedOption is nullable — a null value represents a skipped question.
- * Requirements: 10.1–10.4, 17.10
+ * DTO representing a single answer within an exam attempt.
+ *
+ * <p>Which field to populate depends on the question type:
+ * <ul>
+ *   <li>MCQ            — set {@code selectedOption} (A/B/C/D or null to skip)</li>
+ *   <li>MULTIPLE_CHOICE— set {@code selectedOptions} as comma-separated letters, e.g. "A,C"</li>
+ *   <li>SHORT_ANSWER   — set {@code writtenAnswer} with free text</li>
+ * </ul>
  */
-@Schema(description = "A single answer choice for one question in an exam attempt")
+@Schema(description = "A single answer for one question in an exam attempt")
 public record AnswerDto(
 
-        @Schema(description = "ID of the question being answered", example = "42", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "ID of the question being answered", example = "42",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Question ID must not be null")
         Long questionId,
 
-        // null means the question was skipped; if provided must be A, B, C, or D
-        @Schema(description = "Selected answer option — A, B, C, or D. Set to null to skip the question.", example = "B", allowableValues = {"A", "B", "C", "D"}, nullable = true)
-        @Pattern(regexp = "[ABCD]", message = "Selected option must be one of: A, B, C, D")
-        String selectedOption
+        @Schema(description = "MCQ: selected option — A, B, C, or D. Null = skipped.",
+                example = "B", allowableValues = {"A", "B", "C", "D"}, nullable = true)
+        @Pattern(regexp = "[ABCD]", message = "selectedOption must be one of: A, B, C, D")
+        String selectedOption,
+
+        @Schema(description = "MULTIPLE_CHOICE: comma-separated selected letters, e.g. \"A,C\"",
+                example = "A,C", nullable = true)
+        String selectedOptions,
+
+        @Schema(description = "SHORT_ANSWER: student's free-text answer",
+                example = "Binary search has O(log n) time complexity.", nullable = true)
+        String writtenAnswer
 
 ) {
-    /**
-     * Returns selectedOption as a Character, or null if the question was skipped.
-     */
+    /** Returns selectedOption as a Character, or null if skipped/N/A. */
     public Character selectedOptionChar() {
-        return selectedOption != null ? selectedOption.charAt(0) : null;
+        return selectedOption != null && !selectedOption.isBlank() ? selectedOption.charAt(0) : null;
     }
 }
