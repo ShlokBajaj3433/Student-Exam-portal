@@ -117,7 +117,7 @@ function AdminLayout() {
               Welcome back,
             </span>
             <span className="text-sm font-semibold text-gray-800">
-              {user?.name || user?.email || 'Admin'}
+              {user?.name || 'Admin'}
             </span>
           </div>
 

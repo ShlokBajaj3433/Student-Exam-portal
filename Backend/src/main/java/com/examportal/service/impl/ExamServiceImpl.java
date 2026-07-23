@@ -63,7 +63,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setTitle(request.title());
         exam.setDescription(request.description());
         exam.setDurationMinutes(request.durationMinutes());
-        exam.setTotalMarks(request.totalMarks());
+        exam.setTotalMarks(0); // computed from questions; 0 until questions are assigned
         exam.setStartTime(request.startTime());
         exam.setEndTime(request.endTime());
         exam.setStatus(ExamStatus.DRAFT);
@@ -107,9 +107,7 @@ public class ExamServiceImpl implements ExamService {
         if (request.durationMinutes() != null) {
             exam.setDurationMinutes(request.durationMinutes());
         }
-        if (request.totalMarks() != null) {
-            exam.setTotalMarks(request.totalMarks());
-        }
+        // totalMarks is NOT updated here — it is recomputed whenever questions are assigned
         if (request.startTime() != null) {
             exam.setStartTime(request.startTime());
         }
@@ -191,6 +189,10 @@ public class ExamServiceImpl implements ExamService {
                     "Cannot publish exam '" + exam.getTitle() + "': no questions are assigned.");
         }
 
+        // Recompute totalMarks at publish time as a safety net
+        int computed = exam.getQuestions().stream().mapToInt(Question::getMarks).sum();
+        exam.setTotalMarks(computed);
+
         exam.setStatus(ExamStatus.PUBLISHED);
         return ExamResponse.from(examRepository.save(exam));
     }
@@ -245,6 +247,11 @@ public class ExamServiceImpl implements ExamService {
         }
 
         exam.setQuestions(questions);
+
+        // Recompute totalMarks from the newly assigned question set
+        int computed = questions.stream().mapToInt(Question::getMarks).sum();
+        exam.setTotalMarks(computed);
+
         return ExamResponse.from(examRepository.save(exam));
     }
 

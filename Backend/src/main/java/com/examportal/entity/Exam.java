@@ -31,8 +31,10 @@ public class Exam {
     @Column(nullable = false)
     private Integer durationMinutes;
 
+    // totalMarks is derived from assigned questions (sum of each question's marks).
+    // Computed and stored on question assignment / publish for query performance.
     @Column(nullable = false)
-    private Integer totalMarks;
+    private Integer totalMarks = 0;
 
     private LocalDateTime startTime;
 
