@@ -189,4 +189,23 @@ public class UserServiceImpl implements UserService {
 
         return StudentProfileResponse.from(student);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getAdminProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User (email=" + email + ")", -1L));
+        return UserResponse.from(user);
+    }
+
+    @Override
+    public UserResponse updateAdminProfile(String email, String newName) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User (email=" + email + ")", -1L));
+        if (newName != null && !newName.isBlank()) {
+            user.setName(newName.trim());
+            userRepository.save(user);
+        }
+        return UserResponse.from(user);
+    }
 }

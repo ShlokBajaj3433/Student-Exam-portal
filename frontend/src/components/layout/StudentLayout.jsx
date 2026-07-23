@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BookOpen, ClipboardList, LogOut, Menu, X } from 'lucide-react';
+import { NavLink, Outlet } from 'react-router-dom';
+import { BookOpen, ClipboardList, LogOut, Menu, X, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/student/exams', label: 'Available Exams', icon: BookOpen },
-  { to: '/student/attempts', label: 'My Attempts', icon: ClipboardList },
+  { to: '/student/exams',    label: 'Available Exams', icon: BookOpen },
+  { to: '/student/attempts', label: 'My Attempts',     icon: ClipboardList },
+  { to: '/student/profile',  label: 'My Profile',      icon: UserCircle },
 ];
 
 function StudentLayout() {

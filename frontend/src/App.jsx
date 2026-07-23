@@ -13,6 +13,7 @@ import QuestionEditor from './pages/admin/QuestionEditor';
 import UserManager from './pages/admin/UserManager';
 import ResultsViewer from './pages/admin/ResultsViewer';
 import Analytics from './pages/admin/Analytics';
+import ProfilePage from './pages/ProfilePage';
 import StudentLayout from './components/layout/StudentLayout';
 import AvailableExams from './pages/student/AvailableExams';
 import AttemptHistory from './pages/student/AttemptHistory';
@@ -74,6 +75,7 @@ function AppRoutes() {
           <Route path="/admin/users" element={<UserManager />} />
           <Route path="/admin/results" element={<ResultsViewer />} />
           <Route path="/admin/analytics" element={<Analytics />} />
+          <Route path="/admin/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
       </Route>
@@ -84,6 +86,7 @@ function AppRoutes() {
           <Route path="/student/dashboard" element={<Navigate to="/student/exams" replace />} />
           <Route path="/student/exams" element={<AvailableExams />} />
           <Route path="/student/attempts" element={<AttemptHistory />} />
+          <Route path="/student/profile" element={<ProfilePage />} />
           <Route path="/student/result/:attemptId" element={<Result />} />
         </Route>
         <Route path="/student/exam/:attemptId" element={<ExamWorkspace />} />

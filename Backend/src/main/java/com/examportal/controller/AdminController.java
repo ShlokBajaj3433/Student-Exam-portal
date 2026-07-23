@@ -278,6 +278,35 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    // ─── Admin self-profile ───────────────────────────────────────────────────
+
+    @GetMapping("/profile")
+    @Operation(summary = "Get own admin profile")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profile returned",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
+    })
+    public ResponseEntity<UserResponse> getOwnProfile(Authentication authentication) {
+        return ResponseEntity.ok(userService.getAdminProfile(authentication.getName()));
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "Update own admin profile — only name is updatable")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profile updated",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
+            @ApiResponse(responseCode = "403", description = "Not ADMIN role")
+    })
+    public ResponseEntity<UserResponse> updateOwnProfile(
+            @RequestBody java.util.Map<String, String> body,
+            Authentication authentication) {
+        String newName = body.get("name");
+        return ResponseEntity.ok(userService.updateAdminProfile(authentication.getName(), newName));
+    }
+
     // ─── Private helpers ───────────────────────────────────────────────────────
 
     /**

@@ -1,25 +1,19 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FileText,
-  HelpCircle,
-  Users,
-  BarChart2,
-  LineChart,
-  LogOut,
-  Menu,
-  X,
+  LayoutDashboard, FileText, HelpCircle, Users,
+  BarChart2, LineChart, LogOut, Menu, X, UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/exams', label: 'Exams', icon: FileText },
+  { to: '/admin/dashboard', label: 'Dashboard',    icon: LayoutDashboard },
+  { to: '/admin/exams',     label: 'Exams',         icon: FileText },
   { to: '/admin/questions', label: 'Question Bank', icon: HelpCircle },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/results', label: 'Results', icon: BarChart2 },
-  { to: '/admin/analytics', label: 'Analytics', icon: LineChart },
+  { to: '/admin/users',     label: 'Users',         icon: Users },
+  { to: '/admin/results',   label: 'Results',       icon: BarChart2 },
+  { to: '/admin/analytics', label: 'Analytics',     icon: LineChart },
+  { to: '/admin/profile',   label: 'My Profile',    icon: UserCircle },
 ];
 
 function AdminLayout() {

@@ -31,7 +31,6 @@ public interface UserService {
 
     /**
      * Disables the user account identified by userId.
-     * Throws BadRequestException if userId matches the calling admin's own ID.
      *
      * @param userId      the target user to disable
      * @param callerEmail the email of the admin performing the deletion (from JWT)
@@ -60,4 +59,10 @@ public interface UserService {
      * @return the updated student profile
      */
     StudentProfileResponse updateStudentProfile(String email, UpdateProfileRequest request);
+
+    /** Returns the admin's own profile (UserResponse) by their email. */
+    UserResponse getAdminProfile(String email);
+
+    /** Updates the authenticated admin's own name. Only name is updatable. */
+    UserResponse updateAdminProfile(String email, String newName);
 }
