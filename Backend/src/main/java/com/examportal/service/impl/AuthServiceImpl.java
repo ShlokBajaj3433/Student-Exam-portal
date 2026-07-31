@@ -107,9 +107,9 @@ public class AuthServiceImpl implements AuthService {
             studentRepository.save(student);
         }
 
-        // Load user details and generate JWT token (Requirement 2.4, 2.5)
+        // Load user details and generate JWT token with name claim (Requirement 2.4, 2.5)
         UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getEmail());
-        String token = jwtUtil.generateToken(userDetails);
+        String token = jwtUtil.generateToken(userDetails, java.util.Map.of("name", savedUser.getName()));
 
         // Return auth response with token and expiration
         return new AuthResponse(
@@ -151,8 +151,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        // Generate JWT token (Requirement 2.1, 2.4, 2.5)
-        String token = jwtUtil.generateToken(userDetails);
+        // Generate JWT token with name claim (Requirement 2.1, 2.4, 2.5)
+        String userName = userRepository.findByEmail(loginRequest.email())
+                .map(User::getName)
+                .orElse("");
+        String token = jwtUtil.generateToken(userDetails, java.util.Map.of("name", userName));
 
         // Extract role from authorities
         Role role = extractRoleFromAuthorities(userDetails);

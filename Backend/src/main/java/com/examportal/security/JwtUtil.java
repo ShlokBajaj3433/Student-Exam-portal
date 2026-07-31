@@ -92,6 +92,27 @@ public class JwtUtil {
     }
 
     /**
+     * Overload that accepts additional claims (e.g. name) to embed in the token.
+     */
+    public String generateToken(UserDetails userDetails, Map<String, Object> extraClaims) {
+        if (userDetails == null || userDetails.getUsername() == null || userDetails.getUsername().isEmpty()) {
+            throw new IllegalArgumentException("User details and username must not be null");
+        }
+
+        Map<String, Object> claims = new HashMap<>(extraClaims);
+        claims.put("roles", userDetails.getAuthorities()
+            .stream().map(grantedAuthority -> grantedAuthority.getAuthority()).toList());
+
+        return Jwts.builder()
+            .claims(claims)
+            .subject(userDetails.getUsername())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + expirationMs))
+            .signWith(getSigningKey())
+            .compact();
+    }
+
+    /**
      * Validates the JWT token against user details.
      * Checks if the token is valid, not expired, and the subject matches.
      * This method never throws exceptions for invalid tokens. Instead, it returns false

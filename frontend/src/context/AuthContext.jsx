@@ -32,7 +32,7 @@ function decodeToken(token) {
       : '';
 
     return {
-      name: decoded.name ?? decoded.sub ?? '',
+      name: decoded.name || '',           // JWT now carries 'name' claim
       email: decoded.email ?? decoded.sub ?? '',
       role,
     };
@@ -89,7 +89,7 @@ export function AuthProvider({ children }) {
 
     // If the JWT doesn't carry name/email, fall back to whatever the API returned
     const resolvedUser = {
-      name: userData?.name || data.name || '',
+      name: userData?.name || data.name || '',     // JWT 'name' claim first
       email: userData?.email || data.email || credentials.email || '',
       role: userData?.role || data.role || '',
     };
