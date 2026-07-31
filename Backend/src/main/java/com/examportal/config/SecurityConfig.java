@@ -24,6 +24,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Configures JWT-based authentication, role-based access control, and security filters.
@@ -120,10 +121,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",   // Vite dev server
-            "http://localhost:3000"    // fallback / alternate dev port
-        ));
+        String frontendOrigin = System.getenv("FRONTEND_ORIGIN");
+        List<String> allowedOrigins = Stream.of(
+                "http://localhost:5173",   // Vite dev server
+                "http://localhost:3000",   // fallback / alternate dev port
+                frontendOrigin
+            )
+            .filter(origin -> origin != null && !origin.isBlank())
+            .toList();
+
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
