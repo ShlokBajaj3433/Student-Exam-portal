@@ -23,6 +23,13 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ErrorResponse.of(413, "The uploaded file exceeds the maximum upload size. Use an Excel file of 1 MB or smaller."));
+    }
+
     /**
      * Handle BadRequestException → 400 Bad Request
      * For example: admin attempting to delete their own account.

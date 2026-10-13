@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Pencil, Trash2, ChevronLeft, ChevronRight,
+  Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Upload,
   Search, HelpCircle, CheckCircle2, Filter, X, AlignLeft, ListChecks, Circle,
 } from 'lucide-react';
 import { getQuestions, deleteQuestion } from '../../services/questionService';
+import ImportQuestionsModal from './ImportQuestionsModal';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -215,6 +216,8 @@ function QuestionBank() {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showImport, setShowImport] = useState(false);
+  const [importNotice, setImportNotice] = useState('');
 
   // Filters (client-side on current page)
   const [search, setSearch] = useState('');
@@ -292,6 +295,10 @@ function QuestionBank() {
             {totalElements > 0 ? `${totalElements} question${totalElements !== 1 ? 's' : ''} in library` : 'Build your question library'}
           </p>
         </div>
+        <div className="flex gap-3 flex-wrap">
+        <button onClick={() => { setImportNotice(''); setShowImport(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-indigo-200 text-indigo-600 text-sm font-semibold rounded-xl hover:bg-indigo-50">
+          <Upload size={16} /> Upload Excel
+        </button>
         <button
           onClick={() => navigate('/admin/questions/new')}
           className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
@@ -299,7 +306,16 @@ function QuestionBank() {
           <Plus size={16} />
           New Question
         </button>
+        </div>
       </div>
+      {importNotice && <p role="status" className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-xl mb-6">{importNotice}</p>}
+      {showImport && <ImportQuestionsModal onClose={() => setShowImport(false)} onImported={(count) => {
+        setShowImport(false);
+        setImportNotice(`${count} question${count === 1 ? '' : 's'} imported successfully.`);
+        clearFilters();
+        if (page === 0) fetchQuestions();
+        else setPage(0);
+      }} />}
 
       {/* ── Filters bar ── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">

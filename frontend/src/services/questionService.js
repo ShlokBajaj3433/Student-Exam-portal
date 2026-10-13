@@ -25,3 +25,13 @@ export function updateQuestion(id, data) {
 export function deleteQuestion(id) {
   return api.delete(`/api/questions/${id}`);
 }
+
+export function importQuestions(file) {
+  const data = new FormData();
+  data.append('file', file);
+  return api.post('/api/questions/import', data);
+}
+
+export function downloadQuestionTemplate() {
+  return api.get('/api/questions/import/template', { responseType: 'blob' });
+}

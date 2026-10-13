@@ -4,6 +4,11 @@ import com.examportal.dto.request.CreateQuestionRequest;
 import com.examportal.dto.request.UpdateQuestionRequest;
 import com.examportal.dto.response.AdminQuestionResponse;
 import com.examportal.service.QuestionService;
+import com.examportal.service.QuestionExcelService;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import java.io.IOException;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,9 +39,28 @@ import org.springframework.web.bind.annotation.*;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final QuestionExcelService excelService;
 
-    public QuestionController(QuestionService questionService) {
+    public QuestionController(QuestionService questionService, QuestionExcelService excelService) {
         this.questionService = questionService;
+        this.excelService = excelService;
+    }
+
+    @GetMapping("/import/template")
+    @Operation(summary = "Download Excel question import template")
+    public ResponseEntity<byte[]> downloadTemplate() throws IOException {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=question-import-template.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelService.template());
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Bulk import questions from Excel", description = "Imports the first worksheet; maximum 500 questions and 1 MB. All rows must be valid.")
+    public ResponseEntity<Map<String, Integer>> importQuestions(@RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("importedCount", excelService.importQuestions(file, principal.getUsername())));
     }
 
     @GetMapping

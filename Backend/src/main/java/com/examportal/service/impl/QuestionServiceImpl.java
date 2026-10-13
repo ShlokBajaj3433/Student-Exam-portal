@@ -118,7 +118,7 @@ public class QuestionServiceImpl implements QuestionService {
     /**
      * Cross-field validation per question type.
      */
-    private void validateForType(QuestionType type,
+    public static void validateForType(QuestionType type,
                                   String oA, String oB, String oC, String oD,
                                   String correctAnswer, String correctAnswers, String modelAnswer) {
         switch (type) {
@@ -195,7 +195,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .collect(java.util.stream.Collectors.joining(","));
     }
 
-    private boolean isBlank(String s) {
+    private static boolean isBlank(String s) {
         return s == null || s.isBlank();
     }
 }
