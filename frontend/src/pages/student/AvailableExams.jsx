@@ -52,7 +52,7 @@ function StartExamModal({ exam, onCancel, onConfirm, isStarting, startError }) {
           <div className="flex items-center gap-2 text-sm text-teal-800">
             <Calendar size={15} />
             <span>
-              Available until: <strong>{formatDateTime(exam.endTime)}</strong>
+              Available until: <strong>{exam.endTime ? formatDateTime(exam.endTime) : 'No closing date'}</strong>
             </span>
           </div>
         </div>
@@ -139,7 +139,7 @@ function ExamCard({ exam, onStartClick }) {
         <div className="flex items-center gap-1.5 text-gray-600 col-span-2">
           <Calendar size={14} className="text-teal-500 flex-shrink-0" />
           <span className="truncate">
-            {formatDateTime(exam.startTime)} – {formatDateTime(exam.endTime)}
+            {exam.startTime ? formatDateTime(exam.startTime) : 'Open now'} – {exam.endTime ? formatDateTime(exam.endTime) : 'No closing date'}
           </span>
         </div>
       </div>
@@ -160,6 +160,8 @@ function ExamCard({ exam, onStartClick }) {
 function AvailableExams() {
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
 
@@ -174,8 +176,11 @@ function AvailableExams() {
       setIsLoading(true);
       setFetchError('');
       try {
-        const res = await getAvailableExams();
-        if (!cancelled) setExams(res.data ?? []);
+        const res = await getAvailableExams(page);
+        if (!cancelled) {
+          setExams(Array.isArray(res.data) ? res.data : (res.data?.content ?? []));
+          setTotalPages(res.data?.totalPages ?? 1);
+        }
       } catch (err) {
         if (!cancelled) {
           const msg =
@@ -191,7 +196,7 @@ function AvailableExams() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   function handleStartClick(exam) {
     setSelectedExam(exam);
@@ -210,7 +215,7 @@ function AvailableExams() {
     setIsStarting(true);
     setStartError('');
     try {
-      const res = await startExam(selectedExam.id);
+      const res = await startExam(selectedExam.examId);
       const attemptData = res.data;
       navigate(`/student/exam/${attemptData.attemptId}`, { state: { attempt: attemptData } });
     } catch (err) {
@@ -254,8 +259,16 @@ function AvailableExams() {
       {exams.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {exams.map((exam) => (
-            <ExamCard key={exam.id} exam={exam} onStartClick={handleStartClick} />
+            <ExamCard key={exam.examId} exam={exam} onStartClick={handleStartClick} />
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 text-sm">
+          <button disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="px-4 py-2 border rounded-lg disabled:opacity-40">Previous</button>
+          <span>Page {page + 1} of {totalPages}</span>
+          <button disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="px-4 py-2 border rounded-lg disabled:opacity-40">Next</button>
         </div>
       )}
 

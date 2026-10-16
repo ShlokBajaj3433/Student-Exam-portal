@@ -5,13 +5,13 @@ import api from './api';
  */
 
 /** List all PUBLISHED exams in the active time window */
-export function getAvailableExams() {
-  return api.get('/api/student/exams');
+export function getAvailableExams(page = 0, size = 20) {
+  return api.get('/api/student/exams', { params: { page, size } });
 }
 
 /** Start an exam attempt; returns ExamAttemptResponse */
 export function startExam(examId) {
-  return api.post('/api/student/startExam', { examId });
+  return api.post('/api/student/startExam', null, { params: { examId } });
 }
 
 /**
