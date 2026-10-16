@@ -22,14 +22,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * Returns all PUBLISHED exams whose active window covers the given instant.
      */
     @Query("SELECT e FROM Exam e WHERE e.status = 'PUBLISHED' " +
-           "AND :now BETWEEN e.startTime AND e.endTime")
+           "AND (e.startTime IS NULL OR e.startTime <= :now) " +
+           "AND (e.endTime IS NULL OR e.endTime >= :now)")
     List<Exam> findPublishedWithinWindow(@Param("now") LocalDateTime now);
 
     /**
      * Returns a paginated list of PUBLISHED exams whose active window covers the given instant.
      */
     @Query("SELECT e FROM Exam e WHERE e.status = 'PUBLISHED' " +
-           "AND :now BETWEEN e.startTime AND e.endTime")
+           "AND (e.startTime IS NULL OR e.startTime <= :now) " +
+           "AND (e.endTime IS NULL OR e.endTime >= :now)")
     Page<Exam> findPublishedWithinWindowPaged(@Param("now") LocalDateTime now, Pageable pageable);
 
     boolean existsByTitleAndStartTimeBetween(String title, LocalDateTime windowStart, LocalDateTime windowEnd);
